@@ -1,0 +1,55 @@
+# Wireforge sample configuration.
+# Copy to /etc/wireforge/wireforge.toml (systemd) or ./wireforge.toml (cwd).
+# Every value below can also be overridden via WIREFORGE_<SECTION>__<KEY> env.
+
+[server]
+# Where the HTTP server listens. Bind to 127.0.0.1 if reverse-proxied.
+bind = "0.0.0.0:8080"
+# Set true when serving over HTTPS (sets Secure flag on session cookie).
+session_secure = false
+
+[database]
+# SQLite file path. Directory must be writable by the wireforge user.
+path = "./data/wireforge.sqlite"
+
+[security]
+# Master key for encryption-at-rest. Generate with:
+#   openssl rand -base64 48
+# DO NOT use the value below in production.
+master_key = "CHANGE-ME-generate-with-openssl-rand-base64-48"
+
+[wireguard]
+# Public endpoint advertised in generated peer .conf files (host:port).
+# Example: "vpn.example.com:51820" — port is informational; per-interface
+# listen_port is what is actually opened.
+endpoint = "vpn.example.com"
+
+[log]
+# trace | debug | info | warn | error
+# You can also use the full env_logger syntax e.g. "wireforge=debug,info".
+level = "info"
+
+[web]
+# Default locale: en, tr (more in Faz 5+).
+locale_default = "en"
+
+# --- Faz 6 placeholders (disabled by default) ---
+
+[oidc]
+# Enable OIDC/SSO login (in addition to local username+password).
+enabled = false
+# issuer_url     = "https://keycloak.example.com/realms/wireforge"
+# client_id      = "wireforge"
+# client_secret  = "..."
+# redirect_url   = "https://vpn.example.com/auth/oidc/callback"
+#
+# [oidc.role_claim_mapping]
+# wireforge-admin = "admin"
+# wireforge-ops   = "operator"
+
+[federation]
+# Treat this node as a secondary VPN gateway managed by a remote control
+# plane. Leave disabled for single-node deployments.
+enabled = false
+# control_plane_url = "https://vpn-ctrl.example.com"
+# node_token        = "..."

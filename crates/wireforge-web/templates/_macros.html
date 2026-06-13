@@ -1,0 +1,9 @@
+{# Reusable Askama snippet for flash banners. Include with:
+       {% include "_macros.html" %}
+   Then render via the `flash` variable on the page. #}
+{% if let Some(f) = flash %}
+    <div class="mb-4 rounded px-3 py-2 text-sm
+        {% if f.kind_str() == "success" %}bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-200{% else if f.kind_str() == "error" %}bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-200{% else %}bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200{% endif %}">
+        {{ f.message }}
+    </div>
+{% endif %}

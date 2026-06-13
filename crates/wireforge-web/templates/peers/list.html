@@ -1,0 +1,89 @@
+{% extends "layouts/app.html" %}
+{% block title %}Peers · Wireforge{% endblock %}
+{% block main %}
+{% include "_macros.html" %}
+<div class="flex items-center justify-between mb-4">
+    <h1 class="text-2xl font-semibold">Peers</h1>
+    {% if user.role.can_mutate() && has_interfaces %}
+        <a href="/peers/new" class="rounded bg-slate-900 dark:bg-slate-100 dark:text-slate-900 text-white px-3 py-1.5 text-sm">
+            + New peer
+        </a>
+    {% endif %}
+</div>
+
+{% if !has_interfaces %}
+    <div class="bg-amber-50 dark:bg-amber-900/30 rounded-lg shadow p-4 mb-4 text-sm text-amber-800 dark:text-amber-200">
+        No interfaces yet. <a href="/interfaces/new" class="underline">Create one first</a>.
+    </div>
+{% endif %}
+
+{% if peers.is_empty() %}
+    <div class="bg-white dark:bg-slate-800 rounded-lg shadow p-6 text-center text-slate-500">
+        No peers yet.
+    </div>
+{% else %}
+<table class="w-full bg-white dark:bg-slate-800 rounded-lg shadow overflow-hidden text-sm">
+    <thead class="text-left bg-slate-100 dark:bg-slate-700">
+        <tr>
+            <th class="px-3 py-2">Name</th>
+            <th class="px-3 py-2">Interface</th>
+            <th class="px-3 py-2">Public key</th>
+            <th class="px-3 py-2">Allowed IPs</th>
+            <th class="px-3 py-2">Enabled</th>
+            <th class="px-3 py-2 text-right">Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for peer in peers %}
+        <tr class="border-t border-slate-100 dark:border-slate-700">
+            <td class="px-3 py-2">{{ peer.name }}</td>
+            <td class="px-3 py-2 font-mono">{{ peer.interface_name }}</td>
+            <td class="px-3 py-2 font-mono text-xs">{{ peer.public_key_short }}</td>
+            <td class="px-3 py-2 font-mono text-xs">{{ peer.allowed_ips }}</td>
+            <td class="px-3 py-2" id="peer-enabled-{{ peer.id }}">
+                {% if user.role.can_mutate() %}
+                    <button type="button"
+                            hx-post="/peers/{{ peer.id }}/toggle"
+                            hx-target="#peer-enabled-{{ peer.id }}"
+                            hx-swap="innerHTML"
+                            class="rounded px-2 py-0.5 text-xs
+                                {% if peer.enabled %}bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300{% else %}bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200{% endif %}">
+                        {% if peer.enabled %}yes{% else %}no{% endif %}
+                    </button>
+                {% else %}
+                    <span class="rounded px-2 py-0.5 text-xs
+                        {% if peer.enabled %}bg-emerald-100 text-emerald-700{% else %}bg-slate-200 text-slate-700{% endif %}">
+                        {% if peer.enabled %}yes{% else %}no{% endif %}
+                    </span>
+                {% endif %}
+            </td>
+            <td class="px-3 py-2">
+                <div class="flex justify-end gap-1">
+                    {% if peer.has_private_key %}
+                        <a href="/peers/{{ peer.id }}/download"
+                           class="rounded px-2 py-1 text-xs border border-slate-300 dark:border-slate-600">
+                            .conf
+                        </a>
+                        <a href="/peers/{{ peer.id }}/qr" target="_blank"
+                           class="rounded px-2 py-1 text-xs border border-slate-300 dark:border-slate-600">
+                            QR
+                        </a>
+                    {% endif %}
+                    {% if user.role.can_mutate() %}
+                        <a href="/peers/{{ peer.id }}/edit"
+                           class="rounded px-2 py-1 text-xs border border-slate-300 dark:border-slate-600">
+                            Edit
+                        </a>
+                        <form method="post" action="/peers/{{ peer.id }}/delete"
+                              onsubmit="return confirm('Delete peer {{ peer.name }}?');">
+                            <button class="rounded px-2 py-1 text-xs border border-red-300 text-red-700 dark:text-red-400 dark:border-red-700">Delete</button>
+                        </form>
+                    {% endif %}
+                </div>
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+{% endblock %}

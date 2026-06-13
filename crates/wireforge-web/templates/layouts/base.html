@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Wireforge{% endblock %}</title>
+    <link rel="stylesheet" href="/static/css/app.css">
+    <script>
+        // Apply persisted dark mode preference before paint to avoid FOUC.
+        (function () {
+            try {
+                var s = localStorage.getItem('wireforge.theme');
+                if (s === 'dark' || (!s && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                    document.documentElement.classList.add('dark');
+                }
+            } catch (e) {}
+        })();
+    </script>
+    <script src="https://cdn.tailwindcss.com" defer></script>
+    <script>
+        // Tailwind dark mode via class (so we can toggle it manually).
+        window.tailwind = window.tailwind || {};
+        window.tailwind.config = { darkMode: 'class' };
+    </script>
+    <script src="https://unpkg.com/htmx.org@2.0.3" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    {% block head_extra %}{% endblock %}
+</head>
+<body class="h-full bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-50">
+    {% block body %}{% endblock %}
+</body>
+</html>

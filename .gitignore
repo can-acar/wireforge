@@ -1,0 +1,48 @@
+# Rust
+/target
+**/target
+Cargo.lock.bak
+*.rs.bk
+*.pdb
+
+# IDE
+.idea/
+.vscode/
+*.iml
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build outputs
+/dist
+/build
+node_modules/
+
+# Tailwind generated
+crates/wireforge-web/static/css/tailwind.css
+
+# Local config and data
+/data
+*.sqlite
+*.sqlite-*
+*.db
+*.db-*
+.env
+.env.local
+*.local.toml
+wireforge.toml
+
+# Logs
+*.log
+/logs
+
+# Coverage
+*.profraw
+lcov.info
+/coverage
+
+# Docs build
+/docs/book

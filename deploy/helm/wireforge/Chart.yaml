@@ -1,0 +1,15 @@
+apiVersion: v2
+name: wireforge
+description: Wireforge — WireGuard management platform
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+keywords:
+  - wireguard
+  - vpn
+home: https://github.com/can-acar/wireforge
+sources:
+  - https://github.com/can-acar/wireforge
+maintainers:
+  - name: Can Acar
+    email: kivibilgi@gmail.com

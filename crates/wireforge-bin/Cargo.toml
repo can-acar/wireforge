@@ -1,0 +1,45 @@
+[package]
+name = "wireforge-bin"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+description = "Wireforge — server binary"
+
+[[bin]]
+name = "wireforge-server"
+path = "src/main.rs"
+
+[dependencies]
+wireforge-core.workspace = true
+wireforge-infra.workspace = true
+wireforge-web.workspace = true
+wireforge-api.workspace = true
+
+utoipa.workspace = true
+utoipa-swagger-ui.workspace = true
+
+chrono.workspace = true
+serde_json.workspace = true
+
+tokio.workspace = true
+axum.workspace = true
+tower.workspace = true
+tower-http.workspace = true
+tower-sessions.workspace = true
+
+figment.workspace = true
+serde.workspace = true
+anyhow.workspace = true
+parking_lot.workspace = true
+
+tracing.workspace = true
+tracing-subscriber.workspace = true
+tracing-appender.workspace = true
+
+sqlx.workspace = true
+clap.workspace = true
+
+metrics.workspace = true
+metrics-exporter-prometheus.workspace = true

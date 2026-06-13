@@ -1,0 +1,30 @@
+{% extends "layouts/base.html" %}
+{% block title %}Sign in · Wireforge{% endblock %}
+{% block body %}
+<div class="min-h-full flex items-center justify-center p-4">
+    <div class="w-full max-w-sm bg-white dark:bg-slate-800 rounded-lg shadow p-6">
+        <h1 class="text-xl font-semibold mb-4">⚒️ Wireforge</h1>
+        {% if let Some(err) = error %}
+            <div class="mb-3 rounded bg-red-50 dark:bg-red-900/30 px-3 py-2 text-sm text-red-700 dark:text-red-300">
+                {{ err }}
+            </div>
+        {% endif %}
+        <form method="post" action="/login" class="space-y-3">
+            <label class="block text-sm">
+                <span>Username</span>
+                <input class="mt-1 w-full rounded border-slate-300 dark:bg-slate-700 dark:border-slate-600 px-3 py-2"
+                       name="username" autocomplete="username" required value="{{ username }}">
+            </label>
+            <label class="block text-sm">
+                <span>Password</span>
+                <input class="mt-1 w-full rounded border-slate-300 dark:bg-slate-700 dark:border-slate-600 px-3 py-2"
+                       name="password" type="password" autocomplete="current-password" required>
+            </label>
+            <button type="submit"
+                    class="w-full rounded bg-slate-900 dark:bg-slate-100 dark:text-slate-900 text-white py-2 hover:opacity-90">
+                Sign in
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

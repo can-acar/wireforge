@@ -1,0 +1,67 @@
+[package]
+name = "wireforge-web"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+description = "Wireforge — HTTP server (Axum + Askama + HTMX)"
+
+[dependencies]
+wireforge-core.workspace = true
+wireforge-infra.workspace = true
+
+# HTTP
+axum.workspace = true
+axum-extra.workspace = true
+tower.workspace = true
+tower-http.workspace = true
+tower-sessions.workspace = true
+hyper.workspace = true
+
+# Templating
+askama.workspace = true
+
+# Auth
+argon2.workspace = true
+password-hash.workspace = true
+jsonwebtoken.workspace = true
+
+# Async
+async-trait.workspace = true
+tokio.workspace = true
+futures.workspace = true
+
+# Serialization
+serde.workspace = true
+serde_json.workspace = true
+validator.workspace = true
+
+# Logging & errors
+tracing.workspace = true
+thiserror.workspace = true
+anyhow.workspace = true
+
+# i18n
+fluent.workspace = true
+fluent-bundle.workspace = true
+unic-langid.workspace = true
+
+# Misc
+chrono.workspace = true
+ipnet.workspace = true
+qrcode.workspace = true
+time.workspace = true
+uuid.workspace = true
+reqwest.workspace = true
+hmac.workspace = true
+sha2.workspace = true
+sqlx.workspace = true
+once_cell.workspace = true
+governor.workspace = true
+mime.workspace = true
+bytes.workspace = true
+parking_lot.workspace = true
+
+[dev-dependencies]
+tokio = { workspace = true }

@@ -1,0 +1,11 @@
+{% extends "layouts/base.html" %}
+{% block title %}{{ status }} · Wireforge{% endblock %}
+{% block body %}
+<div class="min-h-full flex items-center justify-center p-4">
+    <div class="text-center">
+        <div class="text-6xl font-bold text-slate-400">{{ status }}</div>
+        <p class="mt-4 text-slate-600 dark:text-slate-300">{{ message }}</p>
+        <a href="/" class="mt-6 inline-block underline">Back to dashboard</a>
+    </div>
+</div>
+{% endblock %}

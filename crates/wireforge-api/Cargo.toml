@@ -1,0 +1,34 @@
+[package]
+name = "wireforge-api"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+description = "Wireforge — REST API v1 + OpenAPI"
+
+[dependencies]
+wireforge-core.workspace = true
+wireforge-infra.workspace = true
+wireforge-web.workspace = true
+
+axum.workspace = true
+axum-extra.workspace = true
+tower.workspace = true
+tower-http.workspace = true
+
+async-trait.workspace = true
+tokio.workspace = true
+
+serde.workspace = true
+serde_json.workspace = true
+validator.workspace = true
+
+utoipa.workspace = true
+utoipa-swagger-ui.workspace = true
+
+tracing.workspace = true
+thiserror.workspace = true
+
+chrono.workspace = true
+uuid.workspace = true

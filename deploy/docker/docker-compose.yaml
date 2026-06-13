@@ -1,0 +1,65 @@
+services:
+  wireforge:
+    build:
+      context: ../..
+      dockerfile: deploy/docker/Dockerfile
+    image: wireforge:dev
+    container_name: wireforge
+    restart: unless-stopped
+
+    # Publish the web UI / API port. This works everywhere, including
+    # Docker Desktop on macOS where `network_mode: host` does NOT expose
+    # ports to the host.
+    ports:
+      - "8080:8080"
+
+    # WireGuard data plane needs NET_ADMIN to manage kernel interfaces.
+    cap_add:
+      - NET_ADMIN
+
+    volumes:
+      # Named volume — NOT a host bind mount. On first init Docker copies the
+      # image's /var/lib/wireforge ownership (uid 990 `wireforge`) into the
+      # volume, so the non-root container can create the SQLite DB. A bind
+      # mount (./data) is owned by root on Linux and masks the image chown,
+      # which makes the DB unwritable → migrations fail / interfaces never
+      # persist → empty lists. (macOS hides this because Docker Desktop
+      # uid-maps bind mounts; Linux does not.)
+      - wireforge-data:/var/lib/wireforge
+      # Optional: mount a real config. Uncomment after creating the file
+      # (the container otherwise runs on env vars + built-in defaults):
+      #   - ./wireforge.toml:/etc/wireforge/wireforge.toml:ro
+
+    # The image CMD points at /etc/wireforge/wireforge.toml; without that file
+    # config comes from env + defaults, so point the server at a config that
+    # may be absent and let it fall back.
+    command: ["--config", "/etc/wireforge/wireforge.toml"]
+
+    environment:
+      RUST_LOG: info
+      # macOS / no kernel WireGuard: keep dry-run on. On a Linux host with the
+      # wireguard module, set this to 0 (and see the note below).
+      WIREFORGE_WG_DRY_RUN: "1"
+      # CHANGE in production — generate with: openssl rand -base64 48
+      WIREFORGE_SECURITY__MASTER_KEY: "dev-only-change-me-in-production"
+
+# ── Linux production note ──────────────────────────────────────────────
+# To run the real WireGuard data plane on a Linux host, the container must
+# bind UDP listen ports on the host network. Switch the service to host
+# networking and drop the `ports:` block:
+#
+#   network_mode: host
+#   # ports:           <- remove; not used with host networking
+#   environment:
+#     WIREFORGE_WG_DRY_RUN: "0"
+#
+# `network_mode: host` is Linux-only; it is intentionally NOT used above so
+# the default compose works for macOS development too.
+#
+# If you prefer a host path instead of the named volume, create it and grant
+# the container's user (uid 990) ownership first:
+#   mkdir -p data && sudo chown -R 990:990 data
+# then replace the volume line with:  - ./data:/var/lib/wireforge
+
+volumes:
+  wireforge-data:

@@ -1,0 +1,172 @@
+{% extends "layouts/app.html" %}
+{% block title %}Dashboard · Wireforge{% endblock %}
+{% block head_extra %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+{% endblock %}
+{% block main %}
+{% include "_macros.html" %}
+<h1 class="text-2xl font-semibold mb-4">Dashboard</h1>
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <a href="/interfaces" class="bg-white dark:bg-slate-800 rounded-lg shadow p-4 hover:shadow-md transition">
+        <div class="text-sm text-slate-500">Interfaces</div>
+        <div class="text-3xl font-semibold mt-1">{{ interface_count }}</div>
+        <div class="text-xs text-slate-500 mt-1">{{ up_interface_count }} up</div>
+    </a>
+    <a href="/system" class="bg-white dark:bg-slate-800 rounded-lg shadow p-4 hover:shadow-md transition">
+        <div class="text-sm text-slate-500">Host Interfaces</div>
+        <div class="text-3xl font-semibold mt-1">{{ host_iface_count }}</div>
+        <div class="text-xs text-slate-500 mt-1">{{ host_iface_up }} up</div>
+    </a>
+    <a href="/peers" class="bg-white dark:bg-slate-800 rounded-lg shadow p-4 hover:shadow-md transition">
+        <div class="text-sm text-slate-500">Peers</div>
+        <div class="text-3xl font-semibold mt-1">{{ peer_count }}</div>
+    </a>
+    <div class="bg-white dark:bg-slate-800 rounded-lg shadow p-4">
+        <div class="text-sm text-slate-500">User</div>
+        <div class="text-lg font-medium mt-1">{{ user.username }}</div>
+        <div class="text-xs text-slate-500 mt-1">{{ user.role }}</div>
+    </div>
+</div>
+
+{# Live traffic — painted from embedded JSON, then patched in place via SSE. #}
+<div class="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-4">
+    <div class="bg-white dark:bg-slate-800 rounded-lg shadow p-4">
+        <div class="flex items-center justify-between mb-3">
+            <h2 class="text-sm font-semibold text-slate-600 dark:text-slate-300">Interface Traffic</h2>
+            <span id="wf-iface-totals" class="text-xs text-slate-400"></span>
+        </div>
+        <table class="w-full text-sm">
+            <tbody id="wf-iface-rows"></tbody>
+        </table>
+        <p id="wf-iface-empty" class="text-sm text-slate-400 hidden">No interfaces yet.</p>
+    </div>
+    <div class="bg-white dark:bg-slate-800 rounded-lg shadow p-4">
+        <h2 class="text-sm font-semibold text-slate-600 dark:text-slate-300 mb-3">Top Peers</h2>
+        <table class="w-full text-sm">
+            <tbody id="wf-peer-rows"></tbody>
+        </table>
+        <p id="wf-peer-empty" class="text-sm text-slate-400 hidden">No peer traffic yet.</p>
+    </div>
+</div>
+
+<div class="mt-4 grid grid-cols-1 lg:grid-cols-2 gap-4">
+    <div class="bg-white dark:bg-slate-800 rounded-lg shadow p-4">
+        <h2 class="text-sm font-semibold text-slate-600 dark:text-slate-300 mb-3">Traffic (24h)</h2>
+        <div class="h-56"><canvas id="wf-traffic-line"></canvas></div>
+    </div>
+    <div class="bg-white dark:bg-slate-800 rounded-lg shadow p-4">
+        <h2 class="text-sm font-semibold text-slate-600 dark:text-slate-300 mb-3">Peer Totals</h2>
+        <div class="h-56"><canvas id="wf-traffic-bar"></canvas></div>
+    </div>
+</div>
+
+<p id="wf-live" class="mt-2 text-xs text-slate-400">● live</p>
+
+<script id="wf-traffic-data" type="application/json">{{ traffic_json|safe }}</script>
+<script>
+(function () {
+    var lineChart = null, barChart = null;
+
+    function esc(s) {
+        return String(s).replace(/[&<>"]/g, function (c) {
+            return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c];
+        });
+    }
+
+    function renderTables(d) {
+        var ib = document.getElementById('wf-iface-rows');
+        var ie = document.getElementById('wf-iface-empty');
+        document.getElementById('wf-iface-totals').textContent =
+            '↑ ' + d.total_tx_h + ' · ↓ ' + d.total_rx_h;
+        if (!d.interfaces.length) { ib.innerHTML = ''; ie.classList.remove('hidden'); }
+        else {
+            ie.classList.add('hidden');
+            ib.innerHTML = d.interfaces.map(function (i) {
+                var badge = i.status === 'up'
+                    ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'
+                    : 'bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300';
+                return '<tr class="border-t border-slate-100 dark:border-slate-700">' +
+                    '<td class="py-1.5 font-mono">' + esc(i.name) + '</td>' +
+                    '<td class="py-1.5"><span class="inline-flex items-center rounded px-1.5 py-0.5 text-xs ' + badge + '">' + esc(i.status) + '</span></td>' +
+                    '<td class="py-1.5 text-right text-xs text-slate-500">↑ ' + esc(i.tx_h) + ' · ↓ ' + esc(i.rx_h) + '</td>' +
+                    '</tr>';
+            }).join('');
+        }
+
+        var pb = document.getElementById('wf-peer-rows');
+        var pe = document.getElementById('wf-peer-empty');
+        if (!d.peers.length) { pb.innerHTML = ''; pe.classList.remove('hidden'); }
+        else {
+            pe.classList.add('hidden');
+            pb.innerHTML = d.peers.map(function (p) {
+                return '<tr class="border-t border-slate-100 dark:border-slate-700">' +
+                    '<td class="py-1.5 font-medium">' + esc(p.name) + '</td>' +
+                    '<td class="py-1.5 font-mono text-xs text-slate-500">' + esc(p.iface) + '</td>' +
+                    '<td class="py-1.5 text-right text-xs text-slate-500">↑ ' + esc(p.tx_h) + ' · ↓ ' + esc(p.rx_h) + '</td>' +
+                    '</tr>';
+            }).join('');
+        }
+    }
+
+    function renderCharts(d) {
+        var line = document.getElementById('wf-traffic-line');
+        var bar = document.getElementById('wf-traffic-bar');
+        if (!line || !bar || typeof Chart === 'undefined') return;
+
+        if (!lineChart) {
+            lineChart = new Chart(line, {
+                type: 'line',
+                data: { labels: d.labels, datasets: [
+                    { label: 'TX', data: d.tx, borderColor: '#0ea5e9', tension: 0.3, pointRadius: 0 },
+                    { label: 'RX', data: d.rx, borderColor: '#22c55e', tension: 0.3, pointRadius: 0 }
+                ]},
+                options: { responsive: true, maintainAspectRatio: false, animation: false }
+            });
+        } else {
+            lineChart.data.labels = d.labels;
+            lineChart.data.datasets[0].data = d.tx;
+            lineChart.data.datasets[1].data = d.rx;
+            lineChart.update('none');
+        }
+
+        if (!barChart) {
+            barChart = new Chart(bar, {
+                type: 'bar',
+                data: { labels: d.peer_labels, datasets: [
+                    { label: 'Total', data: d.peer_totals, backgroundColor: '#6366f1' }
+                ]},
+                options: { responsive: true, maintainAspectRatio: false, animation: false,
+                           plugins: { legend: { display: false } } }
+            });
+        } else {
+            barChart.data.labels = d.peer_labels;
+            barChart.data.datasets[0].data = d.peer_totals;
+            barChart.update('none');
+        }
+    }
+
+    function apply(d) { renderTables(d); renderCharts(d); }
+
+    // Initial paint from embedded snapshot.
+    try {
+        apply(JSON.parse(document.getElementById('wf-traffic-data').textContent));
+    } catch (e) { /* ignore */ }
+
+    // Live updates over SSE — no polling, no server re-render.
+    var live = document.getElementById('wf-live');
+    var es = new EventSource('/dashboard/traffic/stream');
+    es.onmessage = function (ev) {
+        try {
+            apply(JSON.parse(ev.data));
+            live.textContent = '● live';
+            live.className = 'mt-2 text-xs text-emerald-500';
+        } catch (e) { /* ignore malformed */ }
+    };
+    es.onerror = function () {
+        live.textContent = '○ reconnecting…';
+        live.className = 'mt-2 text-xs text-amber-500';
+    };
+    window.addEventListener('beforeunload', function () { es.close(); });
+})();
+</script>
+{% endblock %}

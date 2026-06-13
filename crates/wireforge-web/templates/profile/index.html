@@ -1,0 +1,44 @@
+{% extends "layouts/app.html" %}
+{% block title %}Profile · Wireforge{% endblock %}
+{% block main %}
+{% include "_macros.html" %}
+<h1 class="text-2xl font-semibold mb-4">Profile</h1>
+
+<div class="bg-white dark:bg-slate-800 rounded-lg shadow p-6 max-w-xl space-y-4">
+    <div>
+        <div class="text-sm text-slate-500">Username</div>
+        <div class="font-mono">{{ user.username }}</div>
+    </div>
+    <div>
+        <div class="text-sm text-slate-500">Role</div>
+        <div>{{ user.role }}</div>
+    </div>
+    <div class="pt-2 border-t border-slate-200 dark:border-slate-700">
+        <div class="flex items-center justify-between">
+            <div>
+                <div class="text-sm text-slate-500">Two-factor authentication (TOTP)</div>
+                <div class="font-medium">
+                    {% if totp_enabled %}
+                        <span class="text-emerald-700 dark:text-emerald-300">Enabled</span>
+                    {% else %}
+                        <span class="text-slate-500">Disabled</span>
+                    {% endif %}
+                </div>
+            </div>
+            {% if totp_enabled %}
+                <form method="post" action="/profile/2fa/disable"
+                      onsubmit="return confirm('Disable two-factor authentication?');">
+                    <button class="rounded px-3 py-1.5 text-sm border border-red-300 text-red-700 dark:text-red-400 dark:border-red-700">
+                        Disable
+                    </button>
+                </form>
+            {% else %}
+                <a href="/profile/2fa"
+                   class="rounded bg-slate-900 dark:bg-slate-100 dark:text-slate-900 text-white px-3 py-1.5 text-sm">
+                    Enable
+                </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

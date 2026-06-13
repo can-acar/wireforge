@@ -1,0 +1,83 @@
+{% extends "layouts/app.html" %}
+{% block title %}New peer · Wireforge{% endblock %}
+{% block main %}
+{% include "_macros.html" %}
+<div class="max-w-xl">
+    <h1 class="text-2xl font-semibold mb-4">New peer</h1>
+    {% if let Some(err) = error %}
+        <div class="mb-3 rounded bg-red-50 dark:bg-red-900/30 px-3 py-2 text-sm text-red-700 dark:text-red-300">
+            {{ err }}
+        </div>
+    {% endif %}
+    <form method="post" action="/peers/new" class="space-y-4 bg-white dark:bg-slate-800 rounded-lg shadow p-6">
+        <label class="block text-sm">
+            <span>Name</span>
+            <input class="mt-1 w-full rounded border-slate-300 dark:bg-slate-700 dark:border-slate-600 px-3 py-2"
+                   name="name" required maxlength="64" value="{{ form.name }}"
+                   placeholder="laptop-alice">
+        </label>
+        <label class="block text-sm">
+            <span>Interface</span>
+            <select name="interface_id" required
+                    class="mt-1 w-full rounded border-slate-300 dark:bg-slate-700 dark:border-slate-600 px-3 py-2">
+                {% for iface in interfaces %}
+                    <option value="{{ iface.id }}" {% if iface.id == form.interface_id %}selected{% endif %}>
+                        {{ iface.name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </label>
+        <label class="block text-sm">
+            <span>Allowed IPs (optional — auto-assigned if blank)</span>
+            <input class="mt-1 w-full rounded border-slate-300 dark:bg-slate-700 dark:border-slate-600 px-3 py-2 font-mono"
+                   name="allowed_ips" value="{{ form.allowed_ips }}" placeholder="10.7.0.2/32">
+            <span class="text-xs text-slate-500">Comma-separated CIDRs. Leave blank to auto-assign.</span>
+        </label>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <label class="block text-sm">
+                <span>Primary DNS</span>
+                <input class="mt-1 w-full rounded border-slate-300 dark:bg-slate-700 dark:border-slate-600 px-3 py-2 font-mono"
+                       name="primary_dns" value="{{ form.primary_dns }}" placeholder="8.8.8.8">
+            </label>
+            <label class="block text-sm">
+                <span>Secondary DNS</span>
+                <input class="mt-1 w-full rounded border-slate-300 dark:bg-slate-700 dark:border-slate-600 px-3 py-2 font-mono"
+                       name="secondary_dns" value="{{ form.secondary_dns }}" placeholder="8.8.4.4">
+            </label>
+        </div>
+        <label class="block text-sm">
+            <span>Public key (optional)</span>
+            <input class="mt-1 w-full rounded border-slate-300 dark:bg-slate-700 dark:border-slate-600 px-3 py-2 font-mono text-xs"
+                   name="public_key" value="{{ form.public_key }}">
+            <span class="text-xs text-slate-500">Leave blank to auto-generate. A private key below re-derives this on save.</span>
+        </label>
+        <label class="block text-sm">
+            <span>Private key (optional)</span>
+            <div class="mt-1 flex gap-2">
+                <input id="wf-newpeer-pk" type="password" name="private_key" value="{{ form.private_key }}"
+                       class="w-full rounded border-slate-300 dark:bg-slate-700 dark:border-slate-600 px-3 py-2 font-mono text-xs">
+                <button type="button"
+                        onclick="var e=document.getElementById('wf-newpeer-pk');e.type=e.type==='password'?'text':'password'"
+                        class="rounded px-3 border border-slate-300 dark:border-slate-600" title="Show / hide">👁</button>
+            </div>
+            <span class="text-xs text-slate-500">BYOK. Leave blank for a server-generated keypair (recommended).</span>
+        </label>
+        <label class="block text-sm">
+            <span>Persistent keepalive (seconds, 0 to disable)</span>
+            <input class="mt-1 w-full rounded border-slate-300 dark:bg-slate-700 dark:border-slate-600 px-3 py-2"
+                   name="persistent_keepalive" type="number" min="0" max="65535" value="{{ form.persistent_keepalive }}">
+        </label>
+        <label class="inline-flex items-center gap-2 text-sm">
+            <input type="checkbox" name="nat" {% if form.nat %}checked{% endif %}>
+            <span>NAT — route all traffic through this server (full tunnel)</span>
+        </label>
+        <div class="flex gap-2">
+            <button type="submit"
+                    class="rounded bg-slate-900 dark:bg-slate-100 dark:text-slate-900 text-white px-4 py-2">
+                Create
+            </button>
+            <a href="/peers" class="rounded px-4 py-2 border border-slate-300 dark:border-slate-600">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

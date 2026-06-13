@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-config
+  labels:
+    app.kubernetes.io/name: wireforge
+    app.kubernetes.io/instance: {{ .Release.Name }}
+data:
+  wireforge.toml: |
+    [server]
+    bind = "0.0.0.0:{{ .Values.service.httpPort }}"
+    session_secure = true
+
+    [database]
+    path = "/var/lib/wireforge/wireforge.sqlite"
+
+    [security]
+    login_max_attempts = {{ .Values.security.login_max_attempts }}
+    login_lockout_secs = {{ .Values.security.login_lockout_secs }}
+    totp_issuer = "{{ .Values.security.totp_issuer }}"
+
+    [wireguard]
+    endpoint = "{{ .Values.wireguard.endpoint }}"
+
+    [log]
+    level = "info"
+
+    [web]
+    locale_default = "{{ .Values.web.locale_default }}"

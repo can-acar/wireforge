@@ -1,0 +1,94 @@
+{% extends "layouts/app.html" %}
+{% block title %}System · Wireforge{% endblock %}
+{% block main %}
+{% include "_macros.html" %}
+<h1 class="text-2xl font-semibold mb-4">System Interfaces</h1>
+
+<div class="bg-white dark:bg-slate-800 rounded-lg shadow">
+    <div class="px-4 py-3 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
+        <h2 class="font-semibold flex items-center gap-2"><span>🖧</span> Interfaces</h2>
+        <span id="wf-sys-live" class="text-xs text-slate-400">● live</span>
+    </div>
+    <div class="p-4">
+        <div id="wf-sys-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+        <p id="wf-sys-empty" class="text-sm text-slate-400 hidden">No interfaces found.</p>
+    </div>
+</div>
+
+{# Painted from embedded JSON, then patched in place via SSE. #}
+<script id="wf-sys-data" type="application/json">{{ sysnet_json|safe }}</script>
+<script>
+(function () {
+    function esc(s) {
+        return String(s).replace(/[&<>"]/g, function (c) {
+            return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c];
+        });
+    }
+
+    var NONE = '<span class="italic text-slate-400">None</span>';
+
+    function addrs(list) {
+        if (!list || !list.length) return NONE;
+        return list.map(esc).join('<br>');
+    }
+
+    function row(k, v) {
+        return '<tr class="border-t border-slate-100 dark:border-slate-700">' +
+            '<th class="text-left align-top px-3 py-1.5 font-medium text-slate-500 w-24">' + k + '</th>' +
+            '<td class="px-3 py-1.5 font-mono break-all">' + v + '</td></tr>';
+    }
+
+    function card(i) {
+        var up = !!i.up;
+        var badge = up ? 'bg-emerald-500' : 'bg-red-500';
+        var label = up ? 'up' : 'down';
+        var status = '<span class="' + badge + ' text-white inline-block w-full text-center px-2 py-0.5 rounded">' + label + '</span>';
+        var mac = i.mac ? esc(i.mac) : NONE;
+        var flags = (i.flags && i.flags.length)
+            ? esc(i.flags.join(', '))
+            : '<span class="text-slate-400">—</span>';
+        return '' +
+            '<div class="border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">' +
+                '<div class="px-3 py-2 font-semibold font-mono border-b border-slate-200 dark:border-slate-700">' + esc(i.name) + '</div>' +
+                '<table class="w-full text-sm"><tbody>' +
+                    row('Status', status) +
+                    row('IPv4', addrs(i.ipv4)) +
+                    row('IPv6', addrs(i.ipv6)) +
+                    row('MAC', mac) +
+                    row('Flags', flags) +
+                '</tbody></table>' +
+            '</div>';
+    }
+
+    function render(d) {
+        var grid = document.getElementById('wf-sys-grid');
+        var empty = document.getElementById('wf-sys-empty');
+        var list = (d && d.interfaces) || [];
+        if (!list.length) { grid.innerHTML = ''; empty.classList.remove('hidden'); return; }
+        empty.classList.add('hidden');
+        grid.innerHTML = list.map(card).join('');
+    }
+
+    // Initial paint from embedded snapshot.
+    try {
+        render(JSON.parse(document.getElementById('wf-sys-data').textContent));
+    } catch (e) { /* ignore */ }
+
+    // Live updates over SSE — no polling, no server re-render.
+    var live = document.getElementById('wf-sys-live');
+    var es = new EventSource('/system/interfaces/stream');
+    es.onmessage = function (ev) {
+        try {
+            render(JSON.parse(ev.data));
+            live.textContent = '● live';
+            live.className = 'text-xs text-emerald-500';
+        } catch (e) { /* ignore malformed */ }
+    };
+    es.onerror = function () {
+        live.textContent = '○ reconnecting…';
+        live.className = 'text-xs text-amber-500';
+    };
+    window.addEventListener('beforeunload', function () { es.close(); });
+})();
+</script>
+{% endblock %}

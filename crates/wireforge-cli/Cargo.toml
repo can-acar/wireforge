@@ -1,0 +1,28 @@
+[package]
+name = "wireforge-cli"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+description = "Wireforge — command-line tool"
+
+[[bin]]
+name = "wireforge"
+path = "src/main.rs"
+
+[dependencies]
+wireforge-core.workspace = true
+wireforge-infra.workspace = true
+
+clap.workspace = true
+tokio.workspace = true
+anyhow.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+figment.workspace = true
+sqlx.workspace = true
+tempfile = "3"
+rpassword = "7"

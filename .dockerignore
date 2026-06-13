@@ -1,0 +1,26 @@
+# Keep the Docker build context small — the 7.5 GB target/ tree must never
+# enter it. Only source, manifests, migrations, config sample and templates
+# are needed by the build.
+target/
+dist/
+data/
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+wireforge.toml
+
+# VCS / tooling
+.git/
+.github/
+.gitignore
+.dockerignore
+
+# Local dev artifacts
+*.log
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# Docs build output (sources are kept; built book is not needed in the image)
+docs/book/

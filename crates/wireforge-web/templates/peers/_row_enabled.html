@@ -1,0 +1,9 @@
+{# HTMX fragment swapped into <td id="peer-enabled-{id}"> after toggle. #}
+<button type="button"
+        hx-post="/peers/{{ peer_id }}/toggle"
+        hx-target="#peer-enabled-{{ peer_id }}"
+        hx-swap="innerHTML"
+        class="rounded px-2 py-0.5 text-xs
+            {% if enabled %}bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300{% else %}bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200{% endif %}">
+    {% if enabled %}yes{% else %}no{% endif %}
+</button>

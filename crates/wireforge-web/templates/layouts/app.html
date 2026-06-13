@@ -1,0 +1,41 @@
+{% extends "layouts/base.html" %}
+
+{% block body %}
+<div class="min-h-full flex flex-col">
+    <header class="border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+            <a href="/" class="font-semibold text-lg">⚒️ Wireforge</a>
+            <nav class="flex items-center gap-4 text-sm">
+                <a href="/" class="hover:underline">Dashboard</a>
+                <a href="/interfaces" class="hover:underline">Interfaces</a>
+                <a href="/system" class="hover:underline">System</a>
+                <a href="/peers" class="hover:underline">Peers</a>
+                {% if user.role.can_read_audit() %}
+                    <a href="/audit" class="hover:underline">Audit</a>
+                {% endif %}
+                {% if user.role.can_manage_settings() %}
+                    <a href="/settings" class="hover:underline">Settings</a>
+                {% endif %}
+                <a href="/profile" class="hover:underline">Profile</a>
+                <span class="text-slate-400 dark:text-slate-600">|</span>
+                <button type="button"
+                        onclick="(function(){var d=document.documentElement.classList.toggle('dark');try{localStorage.setItem('wireforge.theme',d?'dark':'light')}catch(e){}})()"
+                        class="text-xs px-2 py-1 rounded border border-slate-300 dark:border-slate-600"
+                        title="Toggle dark mode">
+                    🌓
+                </button>
+                <span>{{ user.username }} <span class="text-xs text-slate-500">({{ user.role }})</span></span>
+                <form method="post" action="/logout">
+                    <button class="text-sm hover:underline" type="submit">Logout</button>
+                </form>
+            </nav>
+        </div>
+    </header>
+    <main class="flex-1 max-w-7xl mx-auto w-full px-4 py-6">
+        {% block main %}{% endblock %}
+    </main>
+    <footer class="text-xs text-slate-500 py-4 text-center">
+        Wireforge 0.1.0 · MIT/Apache-2.0
+    </footer>
+</div>
+{% endblock %}

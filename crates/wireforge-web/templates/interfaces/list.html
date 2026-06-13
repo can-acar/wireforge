@@ -1,0 +1,69 @@
+{% extends "layouts/app.html" %}
+{% block title %}Interfaces · Wireforge{% endblock %}
+{% block main %}
+{% include "_macros.html" %}
+<div class="flex items-center justify-between mb-4">
+    <h1 class="text-2xl font-semibold">Interfaces</h1>
+    {% if user.role.can_mutate() %}
+        <a href="/interfaces/new" class="rounded bg-slate-900 dark:bg-slate-100 dark:text-slate-900 text-white px-3 py-1.5 text-sm">
+            + New interface
+        </a>
+    {% endif %}
+</div>
+
+{% if interfaces.is_empty() %}
+    <div class="bg-white dark:bg-slate-800 rounded-lg shadow p-6 text-center text-slate-500">
+        No interfaces yet.
+    </div>
+{% else %}
+<table class="w-full bg-white dark:bg-slate-800 rounded-lg shadow overflow-hidden text-sm">
+    <thead class="text-left bg-slate-100 dark:bg-slate-700">
+        <tr>
+            <th class="px-3 py-2">Name</th>
+            <th class="px-3 py-2">Public key</th>
+            <th class="px-3 py-2">Port</th>
+            <th class="px-3 py-2">Peers</th>
+            <th class="px-3 py-2">Status</th>
+            <th class="px-3 py-2 text-right">Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for iface in interfaces %}
+        <tr class="border-t border-slate-100 dark:border-slate-700">
+            <td class="px-3 py-2 font-mono">{{ iface.name }}</td>
+            <td class="px-3 py-2 font-mono text-xs">{{ iface.public_key_short }}</td>
+            <td class="px-3 py-2">{{ iface.listen_port }}</td>
+            <td class="px-3 py-2">{{ iface.peer_count }}</td>
+            <td class="px-3 py-2">
+                <span class="inline-flex items-center rounded px-2 py-0.5 text-xs
+                    {% if iface.status == "up" %}bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300{% else if iface.status == "error" %}bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300{% else %}bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200{% endif %}">
+                    {{ iface.status }}
+                </span>
+            </td>
+            <td class="px-3 py-2">
+                <div class="flex justify-end gap-1">
+                    {% if user.role.can_mutate() %}
+                        {% if iface.status == "up" %}
+                            <form method="post" action="/interfaces/{{ iface.id }}/stop">
+                                <button class="rounded px-2 py-1 text-xs border border-slate-300 dark:border-slate-600">Stop</button>
+                            </form>
+                        {% else %}
+                            <form method="post" action="/interfaces/{{ iface.id }}/start">
+                                <button class="rounded px-2 py-1 text-xs border border-slate-300 dark:border-slate-600">Start</button>
+                            </form>
+                        {% endif %}
+                        <a href="/interfaces/{{ iface.id }}/edit"
+                           class="rounded px-2 py-1 text-xs border border-slate-300 dark:border-slate-600">Edit</a>
+                        <form method="post" action="/interfaces/{{ iface.id }}/delete"
+                              onsubmit="return confirm('Delete interface {{ iface.name }}?');">
+                            <button class="rounded px-2 py-1 text-xs border border-red-300 text-red-700 dark:text-red-400 dark:border-red-700">Delete</button>
+                        </form>
+                    {% endif %}
+                </div>
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+{% endblock %}

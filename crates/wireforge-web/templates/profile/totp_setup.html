@@ -1,0 +1,45 @@
+{% extends "layouts/app.html" %}
+{% block title %}Enable 2FA · Wireforge{% endblock %}
+{% block main %}
+{% include "_macros.html" %}
+<h1 class="text-2xl font-semibold mb-4">Enable two-factor authentication</h1>
+
+<div class="bg-white dark:bg-slate-800 rounded-lg shadow p-6 max-w-2xl space-y-4">
+    <ol class="text-sm list-decimal pl-5 space-y-2">
+        <li>Open your authenticator app (Authy, 1Password, Google Authenticator, …).</li>
+        <li>Scan the QR code or paste the secret manually.</li>
+        <li>Enter the 6-digit code below to confirm.</li>
+    </ol>
+
+    <div class="grid md:grid-cols-2 gap-6 items-start">
+        <div class="flex justify-center">
+            <div class="bg-white p-3 rounded">{{ qr_svg|safe }}</div>
+        </div>
+        <div>
+            <div class="text-sm text-slate-500">Manual secret (base32)</div>
+            <code class="block mt-1 break-all font-mono text-sm bg-slate-100 dark:bg-slate-900 rounded p-2">{{ secret_base32 }}</code>
+        </div>
+    </div>
+
+    {% if let Some(err) = error %}
+        <div class="rounded bg-red-50 dark:bg-red-900/30 px-3 py-2 text-sm text-red-700 dark:text-red-300">
+            {{ err }}
+        </div>
+    {% endif %}
+
+    <form method="post" action="/profile/2fa" class="space-y-3">
+        <label class="block text-sm">
+            <span>Verification code</span>
+            <input class="mt-1 w-48 rounded border-slate-300 dark:bg-slate-700 dark:border-slate-600 px-3 py-2 font-mono text-center tracking-widest"
+                   name="code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autofocus required>
+        </label>
+        <div class="flex gap-2">
+            <button type="submit"
+                    class="rounded bg-slate-900 dark:bg-slate-100 dark:text-slate-900 text-white px-4 py-2">
+                Confirm
+            </button>
+            <a href="/profile" class="rounded px-4 py-2 border border-slate-300 dark:border-slate-600">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,12 @@
+[book]
+title = "Wireforge — Operator Handbook"
+authors = ["Can Acar"]
+language = "en"
+multilingual = false
+src = "src"
+
+[output.html]
+default-theme = "ayu"
+preferred-dark-theme = "ayu"
+git-repository-url = "https://github.com/can-acar/wireforge"
+edit-url-template = "https://github.com/can-acar/wireforge/edit/main/docs/{path}"

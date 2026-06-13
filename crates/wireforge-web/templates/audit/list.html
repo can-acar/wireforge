@@ -1,0 +1,37 @@
+{% extends "layouts/app.html" %}
+{% block title %}Audit log · Wireforge{% endblock %}
+{% block main %}
+{% include "_macros.html" %}
+<h1 class="text-2xl font-semibold mb-4">Audit log</h1>
+
+{% if events.is_empty() %}
+<div class="bg-white dark:bg-slate-800 rounded-lg shadow p-6 text-center text-slate-500">
+    No audit events yet.
+</div>
+{% else %}
+<table class="w-full bg-white dark:bg-slate-800 rounded-lg shadow overflow-hidden text-sm">
+    <thead class="text-left bg-slate-100 dark:bg-slate-700">
+        <tr>
+            <th class="px-3 py-2">When</th>
+            <th class="px-3 py-2">Actor</th>
+            <th class="px-3 py-2">IP</th>
+            <th class="px-3 py-2">Action</th>
+            <th class="px-3 py-2">Resource</th>
+            <th class="px-3 py-2">Metadata</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for e in events %}
+        <tr class="border-t border-slate-100 dark:border-slate-700 align-top">
+            <td class="px-3 py-2 font-mono text-xs">{{ e.created_at }}</td>
+            <td class="px-3 py-2 font-mono text-xs">{{ e.actor }}</td>
+            <td class="px-3 py-2 font-mono text-xs">{{ e.actor_ip }}</td>
+            <td class="px-3 py-2"><code class="text-xs">{{ e.action }}</code></td>
+            <td class="px-3 py-2 font-mono text-xs">{{ e.resource }}</td>
+            <td class="px-3 py-2 font-mono text-xs break-all">{{ e.metadata }}</td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+{% endblock %}

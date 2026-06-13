@@ -1,0 +1,39 @@
+[Unit]
+Description=Wireforge — WireGuard management platform
+Documentation=https://github.com/can-acar/wireforge
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=exec
+User=wireforge
+Group=wireforge
+ExecStart=/usr/local/bin/wireforge-server --config /etc/wireforge/wireforge.toml
+Restart=on-failure
+RestartSec=5s
+StateDirectory=wireforge
+WorkingDirectory=/var/lib/wireforge
+
+# Allow WireGuard kernel operations without sudo.
+AmbientCapabilities=CAP_NET_ADMIN
+CapabilityBoundingSet=CAP_NET_ADMIN
+
+# Hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+PrivateDevices=false
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_NETLINK AF_UNIX
+RestrictNamespaces=true
+LockPersonality=true
+MemoryDenyWriteExecute=true
+RestrictRealtime=true
+SystemCallArchitectures=native
+ReadWritePaths=/var/lib/wireforge
+
+[Install]
+WantedBy=multi-user.target

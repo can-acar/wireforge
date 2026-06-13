@@ -1,0 +1,137 @@
+{% extends "layouts/app.html" %}
+{% block title %}Edit {{ iface_name }} · Wireforge{% endblock %}
+{% block main %}
+{% include "_macros.html" %}
+<div class="max-w-xl">
+    <div class="flex items-center justify-between mb-4">
+        <h1 class="text-2xl font-semibold">
+            Edit <span class="font-mono">{{ iface_name }}</span>
+        </h1>
+        <span class="inline-flex items-center rounded px-2 py-0.5 text-xs
+            {% if iface_status == "up" %}bg-emerald-100 text-emerald-700{% else %}bg-slate-200 text-slate-700{% endif %}">
+            {{ iface_status }}
+        </span>
+    </div>
+    {% if let Some(err) = error %}
+        <div class="mb-3 rounded bg-red-50 dark:bg-red-900/30 px-3 py-2 text-sm text-red-700 dark:text-red-300">
+            {{ err }}
+        </div>
+    {% endif %}
+    <form method="post" action="/interfaces/{{ iface_id }}/edit"
+          class="space-y-4 bg-white dark:bg-slate-800 rounded-lg shadow p-6">
+        <p class="text-xs text-slate-500">
+            The interface name cannot be changed. Updates are re-applied to the running interface automatically.
+        </p>
+        <input id="wf-name" type="hidden" name="name" value="{{ form.name }}">
+        <label class="block text-sm">
+            <span>Listen port</span>
+            <input class="mt-1 w-full rounded border-slate-300 dark:bg-slate-700 dark:border-slate-600 px-3 py-2"
+                   name="listen_port" type="number" min="1" max="65535" required value="{{ form.listen_port }}">
+        </label>
+        <label class="block text-sm">
+            <span>Gateway (host egress interface for NAT)</span>
+            <select id="wf-gateway" name="gateway"
+                    class="mt-1 w-full rounded border-slate-300 dark:bg-slate-700 dark:border-slate-600 px-3 py-2">
+                <option value="">— none (no NAT) —</option>
+                {% for g in gateways %}
+                    <option value="{{ g.name }}"{% if form.gateway == g.name %} selected{% endif %}>{{ g.name }}{% if !g.up %} (down){% endif %}</option>
+                {% endfor %}
+            </select>
+            <span class="text-xs text-slate-500">Outbound interface for masquerade (e.g. eth0). Leave empty to skip NAT.</span>
+        </label>
+        <label class="block text-sm">
+            <span>IPv4 CIDR</span>
+            <input class="mt-1 w-full rounded border-slate-300 dark:bg-slate-700 dark:border-slate-600 px-3 py-2 font-mono"
+                   name="ipv4_cidr" value="{{ form.ipv4_cidr }}">
+        </label>
+        <label class="block text-sm">
+            <span>IPv6 CIDR (optional)</span>
+            <input class="mt-1 w-full rounded border-slate-300 dark:bg-slate-700 dark:border-slate-600 px-3 py-2 font-mono"
+                   name="ipv6_cidr" value="{{ form.ipv6_cidr }}">
+        </label>
+        <label class="block text-sm">
+            <span>MTU (optional)</span>
+            <input class="mt-1 w-full rounded border-slate-300 dark:bg-slate-700 dark:border-slate-600 px-3 py-2"
+                   name="mtu" type="number" min="576" max="9000" value="{{ form.mtu }}">
+        </label>
+        <label class="block text-sm">
+            <span>DNS servers (comma-separated)</span>
+            <input class="mt-1 w-full rounded border-slate-300 dark:bg-slate-700 dark:border-slate-600 px-3 py-2 font-mono"
+                   name="dns" value="{{ form.dns }}">
+        </label>
+        <label class="block text-sm">
+            <span>On up (commands, one per line)</span>
+            <textarea id="wf-onup" name="on_up" rows="3"
+                      class="mt-1 w-full rounded border-slate-300 dark:bg-slate-700 dark:border-slate-600 px-3 py-2 font-mono text-xs"
+                      placeholder="iptables -I FORWARD -i wg0 -j ACCEPT">{{ form.on_up }}</textarea>
+            <span class="text-xs text-slate-500">Run on start (no shell; one command per line).</span>
+        </label>
+        <label class="block text-sm">
+            <span>On down (commands, one per line)</span>
+            <textarea id="wf-ondown" name="on_down" rows="3"
+                      class="mt-1 w-full rounded border-slate-300 dark:bg-slate-700 dark:border-slate-600 px-3 py-2 font-mono text-xs"
+                      placeholder="iptables -D FORWARD -i wg0 -j ACCEPT">{{ form.on_down }}</textarea>
+        </label>
+        {% if !generated_rules.is_empty() %}
+        <div class="block text-sm">
+            <span>NAT rules applied on up (read-only)</span>
+            <pre class="mt-1 w-full rounded border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 px-3 py-2 font-mono text-xs whitespace-pre-wrap">{{ generated_rules }}</pre>
+            <span class="text-xs text-slate-500">Structured rules Wireforge installs and removes automatically from the gateway selection.</span>
+        </div>
+        {% endif %}
+        <label class="block text-sm">
+            <span>Public key</span>
+            <input class="mt-1 w-full rounded border-slate-300 dark:bg-slate-700 dark:border-slate-600 px-3 py-2 font-mono text-xs"
+                   name="public_key" value="{{ form.public_key }}" readonly>
+            <span class="text-xs text-slate-500">Read-only — re-derived from the private key on save.</span>
+        </label>
+        <label class="block text-sm">
+            <span>Private key</span>
+            <div class="mt-1 flex gap-2">
+                <input id="wf-iface-pk" type="password" name="private_key" value="{{ form.private_key }}"
+                       class="w-full rounded border-slate-300 dark:bg-slate-700 dark:border-slate-600 px-3 py-2 font-mono text-xs">
+                <button type="button"
+                        onclick="var e=document.getElementById('wf-iface-pk');e.type=e.type==='password'?'text':'password'"
+                        class="rounded px-3 border border-slate-300 dark:border-slate-600" title="Show / hide">👁</button>
+            </div>
+            <span class="text-xs text-slate-500">Leave as-is to keep the current key; enter a new one to rotate (BYOK).</span>
+        </label>
+        <div class="flex gap-2">
+            <button type="submit"
+                    class="rounded bg-slate-900 dark:bg-slate-100 dark:text-slate-900 text-white px-4 py-2">
+                Save
+            </button>
+            <a href="/interfaces" class="rounded px-4 py-2 border border-slate-300 dark:border-slate-600">Cancel</a>
+        </div>
+    </form>
+</div>
+<script>
+(function () {
+    var nameEl = document.getElementById('wf-name');
+    var gwEl = document.getElementById('wf-gateway');
+    var upEl = document.getElementById('wf-onup');
+    var downEl = document.getElementById('wf-ondown');
+    if (!gwEl || !upEl || !downEl) return;
+    // On edit the hooks usually arrive pre-filled, so we don't overwrite them.
+    var touched = upEl.value.trim() !== '' || downEl.value.trim() !== '';
+    upEl.addEventListener('input', function () { touched = true; });
+    downEl.addEventListener('input', function () { touched = true; });
+    function regen() {
+        if (touched) return;
+        var wg = (nameEl ? nameEl.value.trim() : '') || 'wg0';
+        var gw = gwEl.value.trim();
+        var up = ['iptables -I FORWARD -i ' + wg + ' -j ACCEPT',
+                  'iptables -I FORWARD -o ' + wg + ' -j ACCEPT'];
+        var down = ['iptables -D FORWARD -i ' + wg + ' -j ACCEPT',
+                    'iptables -D FORWARD -o ' + wg + ' -j ACCEPT'];
+        if (gw) {
+            up.push('iptables -t nat -I POSTROUTING -o ' + gw + ' -j MASQUERADE');
+            down.push('iptables -t nat -D POSTROUTING -o ' + gw + ' -j MASQUERADE');
+        }
+        upEl.value = up.join('\n');
+        downEl.value = down.join('\n');
+    }
+    gwEl.addEventListener('change', regen);
+})();
+</script>
+{% endblock %}

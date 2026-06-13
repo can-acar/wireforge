@@ -1,0 +1,137 @@
+{% extends "layouts/app.html" %}
+{% block title %}Settings · Wireforge{% endblock %}
+{% block main %}
+{% include "_macros.html" %}
+
+<div class="max-w-3xl" x-data="{ tab: 'general' }">
+    <h1 class="text-2xl font-semibold mb-1">Settings</h1>
+    <p class="text-sm text-slate-500 mb-4">Changes apply immediately. No restart required.</p>
+
+    {% if let Some(err) = error %}
+        <div class="mb-3 rounded bg-red-50 dark:bg-red-900/30 px-3 py-2 text-sm text-red-700 dark:text-red-300">
+            {{ err }}
+        </div>
+    {% endif %}
+
+    <div class="flex gap-2 mb-4 border-b border-slate-200 dark:border-slate-700">
+        <button type="button" @click="tab='general'"
+                :class="tab==='general' ? 'border-b-2 border-sky-500 text-sky-600' : 'text-slate-500'"
+                class="px-3 py-2 text-sm">General</button>
+        <button type="button" @click="tab='security'"
+                :class="tab==='security' ? 'border-b-2 border-sky-500 text-sky-600' : 'text-slate-500'"
+                class="px-3 py-2 text-sm">Security</button>
+        <button type="button" @click="tab='wireguard'"
+                :class="tab==='wireguard' ? 'border-b-2 border-sky-500 text-sky-600' : 'text-slate-500'"
+                class="px-3 py-2 text-sm">WireGuard</button>
+        <button type="button" @click="tab='operational'"
+                :class="tab==='operational' ? 'border-b-2 border-sky-500 text-sky-600' : 'text-slate-500'"
+                class="px-3 py-2 text-sm">Operational</button>
+    </div>
+
+    <form method="post" action="/settings" class="space-y-4">
+        {# --- General --- #}
+        <div x-show="tab==='general'" class="space-y-3">
+            <label class="block text-sm">
+                <span>Default locale</span>
+                <select name="locale_default"
+                        class="mt-1 w-full rounded border-slate-300 dark:bg-slate-700 dark:border-slate-600 px-3 py-2">
+                    {% for loc in ["en", "tr", "es", "de", "fr"] %}
+                        <option value="{{ loc }}"{% if form.locale_default.as_str() == *loc %} selected{% endif %}>{{ loc }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <label class="block text-sm">
+                <span>TOTP issuer</span>
+                <input name="totp_issuer" value="{{ form.totp_issuer }}" required
+                       class="mt-1 w-full rounded border-slate-300 dark:bg-slate-700 dark:border-slate-600 px-3 py-2">
+            </label>
+        </div>
+
+        {# --- Security --- #}
+        <div x-show="tab==='security'" class="space-y-3">
+            <label class="block text-sm">
+                <span>Max failed login attempts <span class="text-slate-400">(1–50)</span></span>
+                <input name="login_max_attempts" type="number" min="1" max="50"
+                       value="{{ form.login_max_attempts }}" required
+                       class="mt-1 w-full rounded border-slate-300 dark:bg-slate-700 dark:border-slate-600 px-3 py-2">
+            </label>
+            <label class="block text-sm">
+                <span>Lockout duration (seconds) <span class="text-slate-400">(60–86400)</span></span>
+                <input name="login_lockout_secs" type="number" min="60" max="86400"
+                       value="{{ form.login_lockout_secs }}" required
+                       class="mt-1 w-full rounded border-slate-300 dark:bg-slate-700 dark:border-slate-600 px-3 py-2">
+            </label>
+            <label class="block text-sm">
+                <span>Session timeout (hours) <span class="text-slate-400">(1–168)</span></span>
+                <input name="session_timeout_hours" type="number" min="1" max="168"
+                       value="{{ form.session_timeout_hours }}" required
+                       class="mt-1 w-full rounded border-slate-300 dark:bg-slate-700 dark:border-slate-600 px-3 py-2">
+                <span class="text-xs text-slate-400">Applies to new sessions; existing sessions keep their original expiry.</span>
+            </label>
+        </div>
+
+        {# --- WireGuard --- #}
+        <div x-show="tab==='wireguard'" class="space-y-3">
+            <label class="block text-sm">
+                <span>Public endpoint <span class="text-slate-400">(host:port)</span></span>
+                <input name="endpoint" value="{{ form.endpoint }}" placeholder="vpn.example.com:51820"
+                       class="mt-1 w-full rounded border-slate-300 dark:bg-slate-700 dark:border-slate-600 px-3 py-2">
+                <span class="text-xs text-slate-400">Written into generated peer configs. Re-download configs after changing.</span>
+            </label>
+        </div>
+
+        {# --- Operational --- #}
+        <div x-show="tab==='operational'" class="space-y-3">
+            <label class="block text-sm">
+                <span>Traffic poller interval (seconds) <span class="text-slate-400">(10–3600)</span></span>
+                <input name="traffic_poller_interval_secs" type="number" min="10" max="3600"
+                       value="{{ form.traffic_poller_interval_secs }}" required
+                       class="mt-1 w-full rounded border-slate-300 dark:bg-slate-700 dark:border-slate-600 px-3 py-2">
+            </label>
+            <label class="flex items-center gap-2 text-sm">
+                <input name="traffic_enabled" type="checkbox" value="true"{% if form.traffic_enabled %} checked{% endif %}>
+                <span>Collect traffic statistics</span>
+            </label>
+            <label class="block text-sm">
+                <span>Backup retention (days) <span class="text-slate-400">(1–365)</span></span>
+                <input name="backup_retention_days" type="number" min="1" max="365"
+                       value="{{ form.backup_retention_days }}" required
+                       class="mt-1 w-full rounded border-slate-300 dark:bg-slate-700 dark:border-slate-600 px-3 py-2">
+            </label>
+            <label class="block text-sm">
+                <span>Log level</span>
+                <select name="log_level"
+                        class="mt-1 w-full rounded border-slate-300 dark:bg-slate-700 dark:border-slate-600 px-3 py-2">
+                    {% for lvl in ["trace", "debug", "info", "warn", "error"] %}
+                        <option value="{{ lvl }}"{% if form.log_level.as_str() == *lvl %} selected{% endif %}>{{ lvl }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+        </div>
+
+        <div class="pt-2">
+            <button type="submit"
+                    class="rounded bg-sky-600 hover:bg-sky-700 text-white px-4 py-2 text-sm">
+                Save settings
+            </button>
+        </div>
+    </form>
+
+    {# --- Read-only, restart-required values --- #}
+    <div class="mt-8 bg-slate-100 dark:bg-slate-800 rounded-lg p-4">
+        <h2 class="text-sm font-semibold mb-2 text-slate-600 dark:text-slate-300">
+            Boot configuration <span class="font-normal text-slate-400">(read-only — set in wireforge.toml, requires restart)</span>
+        </h2>
+        <dl class="text-sm grid grid-cols-2 gap-y-1">
+            <dt class="text-slate-500">Database path</dt>
+            <dd class="font-mono">{{ readonly.database_path }}</dd>
+            <dt class="text-slate-500">Bind address</dt>
+            <dd class="font-mono">{{ readonly.server_bind }}</dd>
+            <dt class="text-slate-500">Secure cookies</dt>
+            <dd class="font-mono">{{ readonly.session_secure }}</dd>
+            <dt class="text-slate-500">Master key</dt>
+            <dd class="font-mono">{{ readonly.master_key_masked }} <span class="text-xs text-slate-400">(rotation: Faz 6)</span></dd>
+        </dl>
+    </div>
+</div>
+{% endblock %}
