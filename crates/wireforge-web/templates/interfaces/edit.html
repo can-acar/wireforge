@@ -91,8 +91,8 @@
                 <input id="wf-iface-pk" type="password" name="private_key" value="{{ form.private_key }}"
                        class="w-full rounded border-slate-300 dark:bg-slate-700 dark:border-slate-600 px-3 py-2 font-mono text-xs">
                 <button type="button"
-                        onclick="var e=document.getElementById('wf-iface-pk');e.type=e.type==='password'?'text':'password'"
-                        class="rounded px-3 border border-slate-300 dark:border-slate-600" title="Show / hide">👁</button>
+                        onclick="wfToggleKey(this,'wf-iface-pk')"
+                        class="inline-flex items-center rounded px-3 border border-slate-300 dark:border-slate-600" title="Show / hide"><i data-lucide="eye" class="w-4 h-4"></i></button>
             </div>
             <span class="text-xs text-slate-500">Leave as-is to keep the current key; enter a new one to rotate (BYOK).</span>
         </label>

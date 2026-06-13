@@ -24,6 +24,25 @@
     </script>
     <script src="https://unpkg.com/htmx.org@2.0.3" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <script src="https://unpkg.com/lucide@latest" defer></script>
+    <script>
+        // Render Lucide icons on load and after htmx swaps (fragments may
+        // bring in fresh [data-lucide] placeholders).
+        function wfRenderIcons() { if (window.lucide) window.lucide.createIcons(); }
+        window.addEventListener('DOMContentLoaded', wfRenderIcons);
+        document.addEventListener('htmx:afterSwap', wfRenderIcons);
+        // Toggle a password field's visibility together with its eye / eye-off
+        // icon. `createIcons` replaces the <i> with an <svg>, so we re-render
+        // the placeholder each toggle.
+        function wfToggleKey(btn, id) {
+            var e = document.getElementById(id);
+            if (!e) return;
+            var show = e.type === 'password';
+            e.type = show ? 'text' : 'password';
+            btn.innerHTML = '<i data-lucide="' + (show ? 'eye-off' : 'eye') + '" class="w-4 h-4"></i>';
+            wfRenderIcons();
+        }
+    </script>
     {% block head_extra %}{% endblock %}
 </head>
 <body class="h-full bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-50">
