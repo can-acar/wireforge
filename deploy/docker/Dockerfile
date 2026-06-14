@@ -78,7 +78,13 @@ COPY config/wireforge.sample.toml /etc/wireforge/wireforge.sample.toml
 
 USER wireforge
 WORKDIR /var/lib/wireforge
+# Web UI / API (TCP). WireGuard listen ports are UDP and chosen per interface
+# at runtime, so they cannot all be enumerated here — the docker-compose `prod`
+# profile uses host networking, which exposes every bound port (web + each
+# interface's UDP listen port) without per-port publishing. 51820/udp is the
+# conventional WireGuard default and is declared for documentation.
 EXPOSE 8080
+EXPOSE 51820/udp
 ENV WIREFORGE_DATABASE__PATH=/var/lib/wireforge/wireforge.sqlite
 
 # Drop capabilities at the orchestrator level; this image expects
