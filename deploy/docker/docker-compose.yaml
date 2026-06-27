@@ -1,6 +1,7 @@
 # Two profiles:
-#   dev  — publishes only the web port; WireGuard runs in dry-run. Works
-#          everywhere, including Docker Desktop on macOS.
+#   dev  — Docker Desktop / macOS friendly. Publishes the web port (8080/tcp)
+#          plus a single WireGuard UDP port (51820/udp) and runs the real data
+#          plane. Create the interface with listen_port=51820 to match.
 #            docker compose -f deploy/docker/docker-compose.yaml --profile dev up
 #   prod — host networking exposes ALL ports (web + every interface's dynamic
 #          WireGuard UDP listen port) with no per-port publishing, plus the real
@@ -10,7 +11,7 @@
 # `docker compose up` with no --profile starts nothing by design — pick one.
 
 services:
-  # ── dev: macOS-friendly. Published web port only, WireGuard dry-run. ──
+  # ── dev: macOS-friendly. Web port + one WireGuard UDP port, real data plane. ──
   wireforge:
     profiles: ["dev"]
     build:
@@ -23,12 +24,24 @@ services:
     # Publish the web UI / API port. This works everywhere, including
     # Docker Desktop on macOS where `network_mode: host` does NOT expose
     # ports to the host.
+    #
+    # The UDP port is the WireGuard data-plane listen port. It MUST match the
+    # `listen_port` you set when creating the interface (51820 here). On Docker
+    # Desktop (macOS) this bridge publish is how the host reaches the tunnel.
     ports:
       - "8080:8080"
+      - "51820:51820/udp"
 
     # WireGuard data plane needs NET_ADMIN to manage kernel interfaces.
     cap_add:
       - NET_ADMIN
+
+    # Run as root in dev. The image's default non-root user (uid 990) keeps
+    # NET_ADMIN only in its *bounding* set — CapEff is empty after the UID drop,
+    # so netlink interface creation fails with EPERM even though the kernel
+    # wireguard module is present. root gets NET_ADMIN effective via cap_add.
+    # Dev-only; the named data volume is root-writable.
+    user: "0:0"
 
     volumes:
       # Named volume — NOT a host bind mount. On first init Docker copies the
@@ -42,8 +55,15 @@ services:
 
     environment:
       RUST_LOG: info
-      # macOS / no kernel WireGuard: keep dry-run on.
-      WIREFORGE_WG_DRY_RUN: "1"
+      # Real WireGuard data plane in the dev container. With the container's
+      # Linux kernel providing the wireguard module (present on recent Docker
+      # Desktop builds), the kernel backend brings up a real interface and
+      # listens on UDP. Set back to "1" to return to UI-only dry-run.
+      WIREFORGE_WG_DRY_RUN: "0"
+      # Endpoint advertised in downloaded peer .conf files. No port → the
+      # interface's listen_port is appended (e.g. 127.0.0.1:51820). Use the
+      # Mac's LAN IP instead of 127.0.0.1 to connect from another device.
+      WIREFORGE_WIREGUARD__ENDPOINT: "127.0.0.1"
       # CHANGE in production — generate with: openssl rand -base64 48
       WIREFORGE_SECURITY__MASTER_KEY: "dev-only-change-me-in-production"
 

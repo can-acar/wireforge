@@ -3,14 +3,15 @@ use std::collections::HashMap;
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 
+use crate::domain::api_token::ApiTokenMarker;
 use crate::domain::audit::AuditAction;
 use crate::domain::interface::InterfaceMarker;
 use crate::domain::peer::PeerMarker;
 use crate::domain::user::UserMarker;
 use crate::domain::webhook::WebhookMarker;
 use crate::domain::{
-    AuditEvent, Id, Interface, IpBan, NewInterface, NewPeer, NewUser, NewWebhook, Peer, Role,
-    User, Webhook,
+    ApiToken, AuditEvent, Id, Interface, IpBan, NewApiToken, NewInterface, NewPeer, NewUser,
+    NewWebhook, Peer, Role, User, Webhook,
 };
 use crate::CoreResult;
 
@@ -31,6 +32,18 @@ pub trait UserRepository: Send + Sync {
     ) -> CoreResult<()>;
     async fn touch_last_login(&self, id: Id<UserMarker>) -> CoreResult<()>;
     async fn delete(&self, id: Id<UserMarker>) -> CoreResult<()>;
+}
+
+#[async_trait]
+pub trait ApiTokenRepository: Send + Sync {
+    async fn create(&self, new: NewApiToken) -> CoreResult<ApiToken>;
+    /// Look up a non-revoked token by its SHA-256 hash. Expiry is enforced by
+    /// the caller via [`ApiToken::is_active`].
+    async fn find_active_by_hash(&self, token_hash: &str) -> CoreResult<Option<ApiToken>>;
+    async fn list_for_user(&self, user_id: Id<UserMarker>) -> CoreResult<Vec<ApiToken>>;
+    /// Revoke a token owned by `owner`. Errors with `NotFound` if it does not
+    /// exist, is already revoked, or belongs to a different user.
+    async fn revoke(&self, id: Id<ApiTokenMarker>, owner: Id<UserMarker>) -> CoreResult<()>;
 }
 
 #[async_trait]

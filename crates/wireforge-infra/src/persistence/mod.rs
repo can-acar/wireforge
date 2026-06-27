@@ -7,6 +7,7 @@ use sqlx::sqlite::{SqliteConnectOptions, SqliteJournalMode, SqlitePoolOptions, S
 use sqlx::SqlitePool;
 use wireforge_core::CoreError;
 
+pub mod api_tokens;
 pub mod audit;
 pub mod bans;
 pub mod interfaces;
@@ -16,6 +17,7 @@ pub mod traffic;
 pub mod users;
 pub mod webhooks;
 
+pub use api_tokens::SqliteApiTokenRepository;
 pub use audit::SqliteAuditRepository;
 pub use bans::SqliteBanRepository;
 pub use interfaces::SqliteInterfaceRepository;

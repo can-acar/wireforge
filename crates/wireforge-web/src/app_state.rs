@@ -7,8 +7,8 @@ use wireforge_core::application::services::{
 use wireforge_core::crypto::SealKey;
 use wireforge_core::domain::RuntimeSettings;
 use wireforge_infra::{
-    DefguardAdapter, GetifaddrsAdapter, IptablesNatAdapter, SqliteAuditRepository,
-    SqliteBanRepository, SqliteInterfaceRepository, SqlitePeerRepository,
+    DefguardAdapter, GetifaddrsAdapter, IptablesNatAdapter, SqliteApiTokenRepository,
+    SqliteAuditRepository, SqliteBanRepository, SqliteInterfaceRepository, SqlitePeerRepository,
     SqliteSettingsRepository, SqliteTrafficRepository, SqliteUserRepository,
 };
 
@@ -42,6 +42,8 @@ pub struct AppState {
     pub bans: Arc<SqliteBanRepository>,
     pub traffic: Arc<SqliteTrafficRepository>,
     pub settings_repo: Arc<SqliteSettingsRepository>,
+    /// API bearer tokens (personal access tokens) for programmatic clients.
+    pub api_tokens: Arc<SqliteApiTokenRepository>,
     pub wg: Arc<DefguardAdapter>,
     /// NAT/masquerade + on_up/on_down hook executor (iptables-backed).
     pub nat: Arc<IptablesNatAdapter>,

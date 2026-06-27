@@ -1,5 +1,6 @@
 //! Pure domain entities and value objects. No I/O, no framework.
 
+pub mod api_token;
 pub mod audit;
 pub mod ban;
 pub mod identity;
@@ -12,6 +13,7 @@ pub mod sysnet;
 pub mod user;
 pub mod webhook;
 
+pub use api_token::{ApiToken, ApiTokenMarker, NewApiToken};
 pub use audit::{AuditAction, AuditEvent};
 pub use ban::IpBan;
 pub use identity::Id;

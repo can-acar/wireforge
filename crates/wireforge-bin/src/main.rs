@@ -24,8 +24,9 @@ use wireforge_core::crypto::SealKey;
 use wireforge_core::domain::RuntimeSettings;
 use wireforge_infra::{
     open_pool, run_migrations, DefguardAdapter, GetifaddrsAdapter, IptablesNatAdapter,
-    SqliteAuditRepository, SqliteBanRepository, SqliteInterfaceRepository, SqlitePeerRepository,
-    SqliteSettingsRepository, SqliteTrafficRepository, SqliteUserRepository,
+    SqliteApiTokenRepository, SqliteAuditRepository, SqliteBanRepository,
+    SqliteInterfaceRepository, SqlitePeerRepository, SqliteSettingsRepository,
+    SqliteTrafficRepository, SqliteUserRepository,
 };
 use wireforge_web::app_state::{LogReload, WebConfig};
 use wireforge_web::{router, AppState};
@@ -70,6 +71,7 @@ async fn main() -> Result<()> {
     let bans = Arc::new(SqliteBanRepository::new(pool.clone()));
     let traffic = Arc::new(SqliteTrafficRepository::new(pool.clone()));
     let settings_repo = Arc::new(SqliteSettingsRepository::new(pool.clone()));
+    let api_tokens = Arc::new(SqliteApiTokenRepository::new(pool.clone()));
     let wg = Arc::new(DefguardAdapter::new(seal_key.clone()));
     let nat = Arc::new(IptablesNatAdapter::new());
     let sysnet = Arc::new(GetifaddrsAdapter::new());
@@ -99,6 +101,7 @@ async fn main() -> Result<()> {
         bans,
         traffic,
         settings_repo,
+        api_tokens,
         wg,
         nat,
         sysnet,
